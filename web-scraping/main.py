@@ -1,8 +1,8 @@
-import json
 import os
 
 import boto3
 from botocore.exceptions import ClientError
+from justjoinit_offers.justJoinIt import load_justJoinIt_offers
 
 ACCESS_KEY = os.getenv("AWS_ACCESS_KEY")
 SECRET_KEY = os.getenv("AWS_SECRET_KEY")
@@ -10,14 +10,6 @@ SECRET_KEY = os.getenv("AWS_SECRET_KEY")
 BUCKET_NAME = "job-offers-data"
 REGION = "eu-central-1"
 
-#SAMPLE DATA
-data = {"title": "Python Developer", "salary": "10k-15k", "location": "Warsaw"}
-
-# Save JSON file
-with open("jobs.json", "w") as f:
-    json.dump([data], f)
-
-# Create S3 client
 s3 = boto3.client(
     "s3",
     aws_access_key_id=ACCESS_KEY,
@@ -56,7 +48,14 @@ FOLDER_NAMES = ["raw", "bronze", "silver", "gold"]
 for folder in FOLDER_NAMES:
     s3.put_object(Bucket=BUCKET_NAME, Key=f"{folder}/")
 
-# Upload file
-s3.upload_file("jobs.json", BUCKET_NAME, "raw_test/jobs_1.json")
+load_justJoinIt_offers()
+
+files = os.listdir("./justjoinit_offers/json_files/")
+for file in files:
+    s3.upload_file(
+        f"./justjoinit_offers/json_files//{file}",
+        BUCKET_NAME,
+        f"raw/just_join_it/{file}",
+    )
 
 print("File uploaded successfully.")
