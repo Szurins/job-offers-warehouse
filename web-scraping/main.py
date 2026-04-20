@@ -2,7 +2,7 @@ import os
 
 import boto3
 from botocore.exceptions import ClientError
-from justjoinit_offers.justJoinIt import load_justJoinIt_offers
+from justjoinit_offers.justJoinIt import load_justjoinit_offers
 
 ACCESS_KEY = os.getenv("AWS_ACCESS_KEY")
 SECRET_KEY = os.getenv("AWS_SECRET_KEY")
@@ -48,7 +48,7 @@ FOLDER_NAMES = ["raw", "bronze", "silver", "gold"]
 for folder in FOLDER_NAMES:
     s3.put_object(Bucket=BUCKET_NAME, Key=f"{folder}/")
 
-load_justJoinIt_offers()
+load_justjoinit_offers()
 
 files = os.listdir("./justjoinit_offers/json_files/")
 for file in files:
