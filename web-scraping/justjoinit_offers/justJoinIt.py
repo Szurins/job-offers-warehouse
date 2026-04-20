@@ -37,7 +37,7 @@ def clean_offer(offer):
 
 def load_justjoinit_offers():
     chrome_options = Options()
-    chrome_options.add_argument("--headless")  # szybciej, bez GUI
+    chrome_options.add_argument("--headless")
 
     driver = webdriver.Chrome(options=chrome_options)
 
@@ -62,7 +62,6 @@ def load_justjoinit_offers():
             print("Błąd parsowania JSON:", e)
             break
 
-        # sprawdzanie statusu
         status = messy_json.get("status", 200)
         if status == 500:
             break
@@ -72,7 +71,6 @@ def load_justjoinit_offers():
         if not offers:
             break
 
-        # czyszczenie danych
         cleaned = [clean_offer(o) for o in offers]
         all_offers.extend(cleaned)
 
@@ -82,7 +80,6 @@ def load_justjoinit_offers():
 
     driver.quit()
 
-    # zapis do pliku
     with open(
         "justjoinit_offers/json_files/justjoinit_offers.json", "w", encoding="utf-8"
     ) as f:
