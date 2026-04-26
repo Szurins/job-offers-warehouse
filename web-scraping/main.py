@@ -2,7 +2,7 @@ import os
 
 import boto3
 from botocore.exceptions import ClientError
-from justjoinit_offers.justJoinIt import load_justjoinit_offers
+from justjoinit_offers.just_join_it import load_justjoinit_offers
 
 ACCESS_KEY = os.getenv("AWS_ACCESS_KEY")
 SECRET_KEY = os.getenv("AWS_SECRET_KEY")
@@ -18,7 +18,7 @@ s3 = boto3.client(
 )
 
 
-# Function to create bucket if not exists
+# Create bucket if not exists
 def create_bucket_if_not_exists(bucket_name):
     try:
         s3.head_bucket(Bucket=bucket_name)
@@ -44,7 +44,7 @@ def create_bucket_if_not_exists(bucket_name):
 create_bucket_if_not_exists(BUCKET_NAME)
 
 # Create folders
-FOLDER_NAMES = ["raw", "bronze", "silver", "gold"]
+FOLDER_NAMES = ["raw"]
 for folder in FOLDER_NAMES:
     s3.put_object(Bucket=BUCKET_NAME, Key=f"{folder}/")
 
