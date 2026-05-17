@@ -59,7 +59,7 @@ def load_justjoinit_offers():
         try:
             messy_json = json.loads(pre.text)
         except Exception as e:
-            print("Błąd parsowania JSON:", e)
+            print("JSON parsing error:", e)
             break
 
         status = messy_json.get("status", 200)
@@ -74,7 +74,7 @@ def load_justjoinit_offers():
         cleaned = [clean_offer(o) for o in offers]
         all_offers.extend(cleaned)
 
-        print(f"Pobrano batch {count}, ofert: {len(cleaned)}")
+        print(f"Downloaded batch {count}, offers: {len(cleaned)}")
 
         count += 1
 
@@ -85,4 +85,4 @@ def load_justjoinit_offers():
     ) as f:
         json.dump(all_offers, f, ensure_ascii=False, indent=2)
 
-    print(f"Zapisano {len(all_offers)} ofert.")
+    print(f"Saved {len(all_offers)} offers.")

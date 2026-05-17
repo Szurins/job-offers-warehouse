@@ -3,6 +3,7 @@ import os
 import boto3
 from botocore.exceptions import ClientError
 from justjoinit_offers.just_join_it import load_justjoinit_offers
+from theprotocolit_offers.the_protocol_it import scrape_theprotocol
 
 ACCESS_KEY = os.getenv("AWS_ACCESS_KEY")
 SECRET_KEY = os.getenv("AWS_SECRET_KEY")
@@ -50,12 +51,24 @@ for folder in FOLDER_NAMES:
 
 load_justjoinit_offers()
 
+print("File uploaded successfully.")
+
 files = os.listdir("./justjoinit_offers/json_files/")
 for file in files:
     s3.upload_file(
         f"./justjoinit_offers/json_files//{file}",
         BUCKET_NAME,
         f"raw/just_join_it/{file}",
+    )
+
+scrape_theprotocol()
+
+files = os.listdir("./theprotocolit_offers/json_files/")
+for file in files:
+    s3.upload_file(
+        f"./theprotocolit_offers/json_files/{file}",
+        BUCKET_NAME,
+        f"raw/the_protocol_it/{file}",
     )
 
 print("File uploaded successfully.")
