@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import time
 
 import requests
@@ -7,12 +8,80 @@ from bs4 import BeautifulSoup
 
 
 def clean_offer(offer):
+    salary_raw = offer.get("salary_raw", "")
+
+    if (
+        not salary_raw
+        or "nie podano" in salary_raw.lower()
+        or "szczegóły" in salary_raw.lower()
+    ):
+        return {
+            "title": offer.get("title"),
+            "companyName": offer.get("company"),
+            "workplaceType": offer.get("work_mode"),
+            "employmentTypes": [],
+            "link": offer.get("link"),
+        }
+
+    currency = "PLN"
+    if "eur" in salary_raw.lower() or "€" in salary_raw:
+        currency = "EUR"
+    elif "usd" in salary_raw.lower() or "$" in salary_raw:
+        currency = "USD"
+
+    contract_mapping = {
+        "b2b": "B2B",
+        "uop": "UoP",
+        "uod": "UoD",
+        "uz": "UZ",
+        "o pracę": "UoP",
+        "zlecenie": "UZ",
+        "dzieło": "UoD",
+    }
+
+    contract_type = "Brak"
+    for key, val in contract_mapping.items():
+        if key in salary_raw.lower():
+            contract_type = val
+            break
+
+    unit = "month"
+    salary_raw_lower = salary_raw.lower()
+    if any(k in salary_raw_lower for k in ["godz", "godzin", " h", "/h"]):
+        unit = "hour"
+    elif any(k in salary_raw_lower for k in ["dzień", "dzien", " d ", "/d"]):
+        unit = "day"
+
+    salary_from = None
+    salary_to = None
+
+    numbers = re.findall(r"(\d+(?:\.\d+)?)", salary_raw.replace(",", "."))
+    if numbers:
+        try:
+            if "k" in salary_raw.lower():
+                salary_from = int(float(numbers[0]) * 1000)
+                if len(numbers) > 1:
+                    salary_to = int(float(numbers[1]) * 1000)
+            else:
+                salary_from = int(float(numbers[0]))
+                if len(numbers) > 1:
+                    salary_to = int(float(numbers[1]))
+        except ValueError:
+            pass
+
     return {
         "title": offer.get("title"),
         "companyName": offer.get("company"),
         "workplaceType": offer.get("work_mode"),
-        "salary": offer.get("salary"),
-        "contractType": offer.get("contract_type"),
+        "employmentTypes": [
+            {
+                "currency": currency,
+                "type": contract_type,
+                "unit": unit,
+                "from": salary_from,
+                "to": salary_to,
+            }
+        ],
         "link": offer.get("link"),
     }
 
@@ -65,11 +134,8 @@ def scrape_theprotocol():
             work_mode_el = offer.find(attrs={"data-test": "text-workModes"})
             work_mode = work_mode_el.text.strip() if work_mode_el else "Brak"
 
-            salary_el = offer.find(attrs={"data-test": "text-earningText"})
-            salary = salary_el.text.strip() if salary_el else "Nie podano"
-
-            contract_el = offer.find(attrs={"data-test": "text-contractType"})
-            contract_type = contract_el.text.strip() if contract_el else "Brak"
+            salary_container = offer.find(attrs={"data-test": "text-salary"})
+            salary_raw = salary_container.text.strip() if salary_container else ""
 
             link = offer.get("href", "")
             if link and not link.startswith("http"):
@@ -79,8 +145,7 @@ def scrape_theprotocol():
                 "title": title,
                 "company": company,
                 "work_mode": work_mode,
-                "salary": salary,
-                "contract_type": contract_type,
+                "salary_raw": salary_raw,
                 "link": link,
             }
             page_offers.append(raw_data)
@@ -95,7 +160,7 @@ def scrape_theprotocol():
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    output_path = os.path.join(output_dir, "theprotocol_offers.json")
+    output_path = os.path.join(output_dir, "theprotocolit_offers.json")
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(all_offers, f, ensure_ascii=False, indent=2)
 
